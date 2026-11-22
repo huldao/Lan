@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lán og lántökur: hjálpargögn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  /* Layout: kynningarhamur. Haus og flettistika eru fastar, einn skjár í einu fyllir restina og texti skalast svo hann passi */
+  --ink: #18242f; --muted: #5a6b78; --bg: #f3f5f7; --surface: #ffffff; --line: #d9e1e7;
+  --navy: #15324a; --accent: #1a8fc4; --gold: #c98a1c; --soft: #e7f3fa; --gold-soft: #fbf1dd;
+  --vt: #2a78d6; --ovt: #eb6834;
+  --display: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e6edf2; --muted: #9fb0bd; --bg: #0f1820; --surface: #16222c; --line: #2a3a47;
+    --navy: #0b1d2b; --accent: #4fb3e3; --gold: #e0a740; --soft: #15303f; --gold-soft: #3a2e17;
+    --vt: #5b9be6; --ovt: #f08457; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e6edf2; --muted: #9fb0bd; --bg: #0f1820; --surface: #16222c; --line: #2a3a47;
+  --navy: #0b1d2b; --accent: #4fb3e3; --gold: #e0a740; --soft: #15303f; --gold-soft: #3a2e17;
+  --vt: #5b9be6; --ovt: #f08457; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.5;
+  display: flex; flex-direction: column; overflow: hidden; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Haus */
+header.top { background: var(--navy); color: #fff; border-top: 5px solid var(--accent); flex: none; }
+.topin { display: flex; align-items: flex-end; gap: 18px; padding: 10px 20px 0; flex-wrap: wrap; }
+.brand { padding-bottom: 10px; margin-right: auto; }
+.brand .eyebrow { font-family: var(--display); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #9cd3ee; font-weight: 700; }
+.brand .name { font-family: var(--display); font-weight: 800; font-size: 20px; }
+nav.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+nav.tabs a { font-family: var(--display); font-weight: 700; font-size: 15px; color: #d7e6ef; text-decoration: none; padding: 9px 15px; border-radius: 8px 8px 0 0; }
+nav.tabs a:hover { background: rgba(255,255,255,.08); }
+nav.tabs a[aria-current="page"] { background: var(--bg); color: var(--ink); }
+
+/* Skjár */
+.stage { flex: 1; min-height: 0; overflow: auto; padding: 18px 24px 10px; }
+.screen { display: none; height: 100%; }
+.screen.active { display: block; }
+.fit { --s: 1; font-size: calc(18px * var(--s)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 1.1em 1.5em 1.2em; max-width: 1500px; margin: 0 auto; min-height: 100%; }
+.screen[data-lota="yfirlit"] .fit { background: transparent; border: 0; padding: 0; }
+.fit > h2 { font-family: var(--display); font-size: 1.6em; line-height: 1.2; margin: .1em 0 .5em; text-wrap: balance; }
+.tag { display: inline-block; font-family: var(--display); font-size: .72em; font-weight: 700; color: var(--navy); background: var(--gold-soft); border-radius: 999px; padding: .1em .8em; }
+:root[data-theme="dark"] .tag { color: var(--gold); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag { color: var(--gold); } }
+h3 { font-family: var(--display); font-size: 1.12em; margin: .9em 0 .35em; }
+h4 { font-family: var(--display); font-size: 1em; margin: .9em 0 .3em; color: var(--muted); }
+.fit p { margin: .35em 0 .55em; }
+.fit ol, .fit ul { margin: .3em 0 .6em; padding-left: 1.4em; }
+.fit li { margin: .2em 0; }
+.lead { color: var(--muted); }
+.note { font-size: .85em; color: var(--muted); }
+.tw { overflow-x: auto; margin: .5em 0 .8em; }
+table { border-collapse: collapse; width: 100%; font-size: .9em; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: .4em .6em; border-bottom: 1px solid var(--line); }
+th { background: var(--soft); font-family: var(--display); font-size: .88em; font-weight: 700; }
+td p { margin: 0; }
+td p + p { color: var(--muted); font-size: .9em; }
+.box { background: var(--soft); border-left: 4px solid var(--accent); border-radius: 8px; padding: .6em 1em; margin: .6em 0; }
+.box p { margin: .2em 0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 2.2em; align-items: start; }
+.two > div > :first-child { margin-top: 0; }
+.cols { columns: 2; column-gap: 2.2em; }
+.step { break-inside: avoid; }
+.step h3 { margin-top: .3em; }
+details.reveal { border: 1px dashed var(--gold); border-radius: 10px; background: var(--gold-soft); }
+details.reveal > summary { cursor: pointer; font-family: var(--display); font-weight: 700; padding: .7em 1em; }
+details.reveal[open] > summary { border-bottom: 1px dashed var(--gold); }
+.reveal-body { padding: .3em 1em .8em; background: var(--surface); border-radius: 0 0 10px 10px; }
+details.fold { margin-top: .6em; font-size: .85em; color: var(--muted); }
+details.fold summary { cursor: pointer; font-weight: 600; }
+table.rubric td:first-child { width: 18%; }
+
+/* Yfirlit */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lota { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1em 1.2em; border-top: 6px solid var(--accent); color: var(--ink); text-decoration: none; display: block; }
+.lota:hover { border-color: var(--accent); }
+.lota.l3 { border-top-color: var(--gold); }
+.lota .eyebrow { font-family: var(--display); font-size: .7em; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--accent); }
+.lota.l3 .eyebrow { color: var(--gold); }
+.lota h3 { margin: .2em 0; font-size: 1.25em; }
+.lota .model { font-size: .85em; color: var(--muted); }
+.lota ul { font-size: .92em; }
+.about { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: .8em 1.3em; margin-top: 16px; }
+
+/* Reiknivélar */
+.calc { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 24px; align-items: start; }
+.fields { display: grid; gap: 9px; font-size: 15px; }
+.fields label { display: grid; gap: 3px; font-weight: 600; }
+.fields input, .fields select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font-variant-numeric: tabular-nums; }
+.fields input[type="range"] { padding: 0; accent-color: var(--accent); }
+.fields .note { font-size: 13.5px; }
+.presets, .seg { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.presets button, .seg button, .btn { font: inherit; font-size: 15px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 13px; cursor: pointer; }
+.presets button:hover, .seg button:hover, .btn:hover { border-color: var(--accent); }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tile { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.tile .k { font-size: 14px; color: var(--muted); }
+.tile .v { font-family: var(--display); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tile.hl { border-color: var(--gold); background: var(--gold-soft); }
+.infl-val { font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--accent); }
+svg.chart { width: 100%; display: block; max-height: calc(100vh - 360px); }
+svg.chart text { fill: var(--muted); font-family: var(--body); font-size: 12px; }
+svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+svg.chart .hover { stroke: var(--muted); stroke-dasharray: 3 3; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; margin: 0 0 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 26px; height: 0; border-top: 3px solid; }
+.readout { font-size: 14px; color: var(--muted); min-height: 1.5em; font-variant-numeric: tabular-nums; }
+#m-table { font-size: 16px; }
+
+/* Hugtakalisti */
+.gtools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.filter { font: inherit; font-size: 16px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; width: min(440px, 100%); background: var(--bg); color: var(--ink); }
+.gbtns { display: flex; gap: 8px; margin-left: auto; }
+.gtable table { font-size: 15px; }
+.gtable th { position: sticky; top: -18px; z-index: 1; }
+.gtable td:nth-child(4) { color: var(--muted); }
+.gtable tr.grp td { background: var(--bg); font-family: var(--display); font-weight: 700; font-size: 13px; }
+
+/* Flettistika */
+.pager { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 24px 12px; border-top: 1px solid var(--line); background: var(--bg); }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.pills a { font-family: var(--display); font-size: 13px; font-weight: 700; text-decoration: none; color: var(--muted); border: 1px solid var(--line); background: var(--surface); padding: 4px 11px; border-radius: 999px; }
+.pills a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pills a .n { opacity: .7; margin-right: 4px; }
+.navbtn { font: inherit; font-family: var(--display); font-weight: 700; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.navbtn:disabled { opacity: .4; cursor: default; }
+
+/* Þröngur skjár: venjuleg skrunsíða */
+@media (max-width: 900px) {
+  body { overflow: auto; display: block; }
+  .stage { overflow: visible; }
+  .two, .grid3, .calc { grid-template-columns: 1fr; }
+  .cols { columns: 1; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .fit { font-size: 17px !important; }
+  .gbtns { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topin">
+    <div class="brand">
+      <div class="eyebrow">Fjármálalæsi · FJÁR2BA05 · 2. hæfniþrep</div>
+      <div class="name">Lán og lántökur: hjálpargögn</div>
+    </div>
+    <nav class="tabs" aria-label="Lotur">
+      <a href="#yfirlit" data-lota="yfirlit">Yfirlit</a>
+      <a href="#lota-1" data-lota="lota-1">Lota 1</a>
+      <a href="#lota-2" data-lota="lota-2">Lota 2</a>
+      <a href="#lota-3" data-lota="lota-3">Lota 3</a>
+      <a href="#hugtok" data-lota="hugtok">Hugtakalisti</a>
+    </nav>
+  </div>
+</header>
+
+<main class="stage" id="stage">
+<section class="screen" data-lota="yfirlit" data-short="Yfirlit"><div class="fit"><div class="grid3">
+  <a class="lota" href="#lota-1">
+    <div class="eyebrow">Lota 1 · Kennslustund 1 og 2</div>
+    <h3>Grunnhugtök lántöku</h3>
+    <div class="model">Aðleiðsla og bein kennsla</div>
+    <ul><li>Bílaviðgerð Sigurjóns: fjögur lánatilboð</li><li>Sýnidæmi skref fyrir skref</li><li>ÁHK reiknivél</li><li>Verkefni: Nýi síminn og Útskriftarferðin</li></ul>
+  </a>
+  <a class="lota" href="#lota-2">
+    <div class="eyebrow">Lota 2 · Kennslustund 3 og 4</div>
+    <h3>Veðlán, verðtrygging og lánsform</h3>
+    <div class="model">Aðleiðsla og bein kennsla</div>
+    <ul><li>Sigurjón og Kata: fjögur húsnæðislán</li><li>Gagnvirkt: hvað gerir verðbólgan?</li><li>Leiðbeiningar um lánareiknivél</li><li>Verkefni: íbúðakaup Emblu og Arons</li></ul>
+  </a>
+  <a class="lota l3" href="#lota-3">
+    <div class="eyebrow">Lota 3 · Kennslustund 5 og 6</div>
+    <h3>Raunhæft verkefni: lántaka</h3>
+    <div class="model">Problem-Based Learning</div>
+    <ul><li>Sviðsmynd: Sigurjón og Kata kaupa íbúð</li><li>Matskvarði</li><li>Viðmið fyrir kennara</li></ul>
+  </a>
+</div>
+<div class="about">
+  <p>Hver skjár sýnir eitt atriði í einu. Flettu með örvunum neðst eða með örvatökkunum á lyklaborðinu. Hnappurinn <strong>Fullur skjár</strong> felur allt annað. Lausnir og viðmið fyrir kennara eru falin þar til smellt er á þau.</p>
+  <p class="note">Vextir og gjöld eru úr vaxtatöflum og verðskrám lánveitenda (meðal annars vaxtatöflu Landsbankans frá 28.07.2026). Þau breytast oft, svo tölurnar eru uppfærðar áður en kennt er. Reiknivélarnar á síðunni eru einfaldaðar til kennslu og koma ekki í stað reiknivéla bankanna.</p>
+</div>
+</div></section>
+<section class="screen" data-lota="lota-1" data-short="Tilboðin"><div class="fit"><span class="tag">Opinn fasi</span><h2>Bílaviðgerð Sigurjóns: fjögur lánatilboð</h2><p>Sigurjón þarf 300.000 kr. strax vegna óvæntrar bílaviðgerðar. Hann skoðar fjögur tilboð sem öll byggja á raunverulegum kjörum íslenskra lánveitenda.</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Tilboð</th>
+<th>Lánstími</th>
+<th>Vextir á ári</th>
+<th>Lántökugjald</th>
+<th>Gjald á hverja greiðslu</th>
+<th>Mánaðarleg greiðsla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><p>A. Lán í appi</p>
+<p>Netgíró lán</p></td>
+<td>3 mánuðir</td>
+<td>17,00%</td>
+<td>3,98% (11.940 kr.)</td>
+<td>398 kr.</td>
+<td>103.245 kr. (jafnar greiðslur)</td>
+</tr>
+<tr>
+<td><p>B. Greiðsludreifing á kreditkorti</p>
+<p>Landsbankinn</p></td>
+<td>12 mánuðir</td>
+<td>15,45%</td>
+<td>Ekkert</td>
+<td>250 kr.</td>
+<td>Fyrst 29.113 kr., lækkar í 25.572 kr.</td>
+</tr>
+<tr>
+<td><p>C. Lán fyrir þig</p>
+<p>Íslandsbanki</p></td>
+<td>24 mánuðir</td>
+<td>12,05%</td>
+<td>2,90% (8.700 kr.)</td>
+<td>Ekki tekið með</td>
+<td>14.129 kr. (jafnar greiðslur)</td>
+</tr>
+<tr>
+<td><p>D. Yfirdráttur</p>
+<p>Landsbankinn</p></td>
+<td>Greitt niður á 12 mánuðum</td>
+<td>15,50%</td>
+<td>Ekkert</td>
+<td>Ekkert</td>
+<td>Fyrst 28.875 kr., lækkar í 25.323 kr.</td>
+</tr>
+</tbody>
+</table></div><div class="box"><p><strong>Spurningar (opinn fasi)</strong></p>
+<p>1. Hver er munurinn á tilboðunum?</p>
+<p>2. Hvað þarftu að vita áður en þú tekur lán?</p>
+<p>3. Hvaða tilboð heldurðu að sé ódýrast? Af hverju?</p></div></div></section>
+<section class="screen" data-lota="lota-1" data-short="Niðurstaðan"><div class="fit"><span class="tag">Lokaður fasi</span><h2>Hvað kostar hvert lán í raun?</h2><p>Taflan er sýnd eftir að nemendur hafa giskað og rætt tilboðin.</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Tilboð</th>
+<th>Útborgað til þín</th>
+<th>Samtals greitt</th>
+<th>Heildarkostnaður</th>
+<th>ÁHK</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. Lán í appi, 3 mán.</td>
+<td>288.060 kr.</td>
+<td>309.734 kr.</td>
+<td>21.674 kr.</td>
+<td>54,9%</td>
+</tr>
+<tr>
+<td>B. Greiðsludreifing, 12 mán.</td>
+<td>300.000 kr.</td>
+<td>328.106 kr.</td>
+<td>28.106 kr.</td>
+<td>18,7%</td>
+</tr>
+<tr>
+<td>C. Lán fyrir þig, 24 mán.</td>
+<td>291.300 kr.</td>
+<td>339.097 kr.</td>
+<td>47.797 kr.</td>
+<td>16,1%</td>
+</tr>
+<tr>
+<td>D. Yfirdráttur, 12 mán.</td>
+<td>300.000 kr.</td>
+<td>325.188 kr.</td>
+<td>25.188 kr.</td>
+<td>16,6%</td>
+</tr>
+</tbody>
+</table></div><div class="box"><p><strong>Spurningar (lokaður fasi)</strong></p>
+<p>1. Af hverju eru lánin svona ólík?</p>
+<p>2. Hvaða lán er ódýrast í krónum? Hvaða lán hefur lægsta ÁHK? Af hverju er það ekki sama lánið?</p>
+<p>3. Hvaða tölur ráða því hvað þú borgar samtals?</p>
+<p>4. Hvenær gæti einhver samt valið dýrasta lánið?</p></div><div class="box"><p><strong>Til umhugsunar: smálán eins og þau voru</strong></p>
+<p>Árið 2020 buðu smálánafyrirtæki til dæmis 10.000 kr. lán sem greiða átti til baka eftir 15 daga, með 2.500 kr. kostnaði (DV, 2020). Það virðist lítið, en ÁHK slíks láns er um 22.711%.</p>
+<p>Spurning: Af hverju verður ÁHK svona há þegar kostnaðurinn er bara 2.500 kr.?</p></div><details class="fold"><summary>Forsendur og heimildir</summary><div><ul>
+<li><p>Lántökugjald er dregið frá útborgun, svo þú færð minna en 300.000 kr. í hendur. Heildarkostnaður er allt sem greitt er umfram 300.000 kr., með lántökugjaldi.</p></li>
+<li><p>A: Netgíró lán. Vextir 17% til 18,5%, lántökugjald 3,98% til 5,98% og tilkynningar- og greiðslugjald 398 kr. samkvæmt verðskrá Netgíró. Hér eru notuð lægstu kjör.</p></li>
+<li><p>B: Vextir á greiðsludreifingu kreditkorta 15,45% (vaxtatafla Landsbankans 28.07.2026) og færslugjald 250 kr. (verðskrá Landsbankans 02.11.2026). Greitt jafnar afborganir.</p></li>
+<li><p>C: Lán fyrir þig hjá Íslandsbanka, lægsta vaxtaálag: 12,05% (vaxtatafla 03.09.2026) og lántökugjald 2,90% (verðskrá 19.03.2026). Greiðslugjald er ekki tekið með því ég fann það ekki í verðskránni. Ef það bætist við hækka heildarkostnaður og ÁHK aðeins.</p></li>
+<li><p>D: Yfirdráttarvextir einstaklinga 15,50% (vaxtatafla Landsbankans 28.07.2026). Gert er ráð fyrir að 25.000 kr. séu greiddar niður á mánuði auk vaxta.</p></li>
+<li><p>ÁHK er reiknuð eftir aðferð reglugerðar nr. 965/2013 um útreikning árlegrar hlutfallstölu kostnaðar.</p></li>
+</ul><p><em>Kjör breytast oft. Uppfærðu tölurnar af vefjum lánveitenda áður en kennt er. Tölurnar voru sóttar í nóvember 2026.</em></p></div></details></div></section>
+<section class="screen" data-lota="lota-1" data-short="Sýnidæmi 1"><div class="fit"><span class="tag">Bein kennsla</span><h2>Sýnidæmi: útreikningur láns, skref 1 til 4</h2><p>Hér er útreikningur á bankaláni útskýrður lið fyrir lið. Sama aðferð virkar fyrir öll lán með jöfnum greiðslum.</p><div class="cols"><div class="step"><h3>1. Forsendur</h3><div class="tw"><table>
+
+<tbody>
+<tr>
+<td>Lánsfjárhæð (höfuðstóll)</td>
+<td>300.000 kr.</td>
+</tr>
+<tr>
+<td>Lánstími</td>
+<td>12 mánuðir, jafnar greiðslur</td>
+</tr>
+<tr>
+<td>Vextir á ári</td>
+<td>12,05% (Lán fyrir þig, Íslandsbanki)</td>
+</tr>
+<tr>
+<td>Lántökugjald</td>
+<td>2,90%, dregið frá útborgun</td>
+</tr>
+</tbody>
+</table></div></div><div class="step"><h3>2. Lántökugjald og útborgun</h3><blockquote>
+<p>Lántökugjald = 300.000 × 2,90% = 8.700 kr.</p>
+<p>Útborgað = 300.000 − 8.700 = 291.300 kr.</p>
+</blockquote><p>Þú skuldar 300.000 kr. en færð bara 291.300 kr. í hendur.</p></div><div class="step"><h3>3. Vextir á mánuði</h3><blockquote>
+<p>Mánaðarvextir = 12,05% / 12 = 1,0042%</p>
+</blockquote></div><div class="step"><h3>4. Mánaðarleg greiðsla</h3><p>Með jöfnum greiðslum er greiðslan sú sama alla mánuðina. Hún er reiknuð með þessari formúlu, þar sem H er höfuðstóll, r mánaðarvextir og n fjöldi greiðslna:</p><blockquote>
+<p>Greiðsla = H × r / (1 − (1 + r)^−n)</p>
+<p>Greiðsla = 300.000 × 0,010042 / (1 − 1,010042^−12) = 26.662 kr.</p>
+</blockquote><p>Í töflureikni:</p><blockquote>
+<p>=PMT(12,05%/12;12;-300000)</p>
+</blockquote></div></div></div></section>
+<section class="screen" data-lota="lota-1" data-short="Sýnidæmi 2"><div class="fit"><span class="tag">Bein kennsla</span><h2>Sýnidæmi: útreikningur láns, skref 5 til 8</h2><div class="cols"><div class="step"><h3>5. Fyrsti mánuðurinn</h3><blockquote>
+<p>Vextir = 300.000 × 1,0042% = 3.012 kr.</p>
+<p>Afborgun = 26.662 − 3.012 = 23.649 kr.</p>
+<p>Nýr höfuðstóll = 300.000 − 23.649 = 276.351 kr.</p>
+</blockquote><p>Næsta mánuð eru vextirnir reiknaðir af nýja höfuðstólnum. Þeir lækka því, og stærri hluti greiðslunnar fer í afborgun.</p></div><div class="step"><h3>6. Greiðsluyfirlit</h3><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Mánuður</th>
+<th>Greiðsla</th>
+<th>Vextir</th>
+<th>Afborgun</th>
+<th>Eftirstöðvar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>26.662</td>
+<td>3.012</td>
+<td>23.649</td>
+<td>276.351</td>
+</tr>
+<tr>
+<td>2</td>
+<td>26.662</td>
+<td>2.775</td>
+<td>23.887</td>
+<td>252.464</td>
+</tr>
+<tr>
+<td>3</td>
+<td>26.662</td>
+<td>2.535</td>
+<td>24.126</td>
+<td>228.338</td>
+</tr>
+<tr>
+<td>4</td>
+<td>26.662</td>
+<td>2.293</td>
+<td>24.369</td>
+<td>203.969</td>
+</tr>
+<tr>
+<td>5</td>
+<td>26.662</td>
+<td>2.048</td>
+<td>24.613</td>
+<td>179.355</td>
+</tr>
+<tr>
+<td>6</td>
+<td>26.662</td>
+<td>1.801</td>
+<td>24.861</td>
+<td>154.495</td>
+</tr>
+<tr>
+<td>7</td>
+<td>26.662</td>
+<td>1.551</td>
+<td>25.110</td>
+<td>129.385</td>
+</tr>
+<tr>
+<td>8</td>
+<td>26.662</td>
+<td>1.299</td>
+<td>25.362</td>
+<td>104.022</td>
+</tr>
+<tr>
+<td>9</td>
+<td>26.662</td>
+<td>1.045</td>
+<td>25.617</td>
+<td>78.405</td>
+</tr>
+<tr>
+<td>10</td>
+<td>26.662</td>
+<td>787</td>
+<td>25.874</td>
+<td>52.531</td>
+</tr>
+<tr>
+<td>11</td>
+<td>26.662</td>
+<td>527</td>
+<td>26.134</td>
+<td>26.397</td>
+</tr>
+<tr>
+<td>12</td>
+<td>26.662</td>
+<td>265</td>
+<td>26.397</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Samtals</td>
+<td>319.940</td>
+<td>19.940</td>
+<td>300.000</td>
+<td></td>
+</tr>
+</tbody>
+</table></div></div><div class="step"><h3>7. Samtals greitt og heildarkostnaður</h3><blockquote>
+<p>Samtals greitt = 12 × 26.662 = 319.940 kr.</p>
+<p>Vextir samtals = 319.940 − 300.000 = 19.940 kr.</p>
+<p>Heildarkostnaður = vextir + lántökugjald = 19.940 + 8.700 = 28.640 kr.</p>
+</blockquote></div><div class="step"><h3>8. ÁHK</h3><p>ÁHK svarar spurningunni: hvaða vextir á ári myndu skila sama kostnaði ef ekkert lántökugjald væri? Útborgunin (291.300 kr.) er borin saman við greiðslurnar (12 × 26.662 kr.).</p><blockquote>
+<p>=(1+RATE(12;-26662;291300))^12-1 → 19,2%</p>
+</blockquote><div class="box"><p><strong>Af hverju er ÁHK hærri en vextirnir?</strong></p>
+<p>Vextirnir eru 12,05% en ÁHK er 19,2%. Munurinn kemur af lántökugjaldinu: þú greiðir vexti af 300.000 kr. en fékkst bara 291.300 kr. Því styttra sem lánið er, því meira hækkar lántökugjaldið ÁHK.</p></div><p><em>Í töflureikni með íslenskum stillingum er semíkomma (;) notuð á milli liða í formúlum. Með enskum stillingum er notuð komma (,).</em></p></div></div></div></section>
+<section class="screen" data-lota="lota-1" data-short="ÁHK reiknivél" data-nofit="1"><div class="fit"><span class="tag">Prófaðu sjálf</span><h2>ÁHK reiknivél</h2><p class="lead">Veldu tilboð eða breyttu tölunum. Lántökugjaldið er dregið frá útborguninni, og ÁHK er reiknuð með öllum greiðslum og gjöldum.</p>
+<div class="presets" id="ahk-presets">
+  <button type="button" data-p="syni">Sýnidæmið</button>
+  <button type="button" data-p="A">A. Lán í appi</button>
+  <button type="button" data-p="B">B. Greiðsludreifing</button>
+  <button type="button" data-p="C">C. Lán fyrir þig</button>
+  <button type="button" data-p="D">D. Yfirdráttur</button>
+</div>
+<div class="calc">
+  <form class="fields" id="ahk-form" autocomplete="off">
+    <label for="a-P">Lánsfjárhæð (kr.)<input id="a-P" type="number" min="1000" step="1000" value="300000"></label>
+    <label for="a-r">Vextir á ári (%)<input id="a-r" type="number" min="0" step="0.05" value="12.05"></label>
+    <label for="a-n">Lánstími (mánuðir)<input id="a-n" type="number" min="1" max="120" step="1" value="12"></label>
+    <label for="a-f">Lántökugjald (%)<input id="a-f" type="number" min="0" step="0.01" value="2.9"></label>
+    <label for="a-g">Gjald á hverja greiðslu (kr.)<input id="a-g" type="number" min="0" step="10" value="0"></label>
+    <label for="a-t">Tegund<select id="a-t"><option value="jg">Jafnar greiðslur</option><option value="ja">Jafnar afborganir</option></select></label>
+  </form>
+  <div>
+    <div class="tiles" id="ahk-out"></div>
+    <p class="note" id="ahk-note"></p>
+  </div>
+</div>
+</div></section>
+<section class="screen" data-lota="lota-1" data-short="Verkefni 1"><div class="fit"><span class="tag">Æfing með leiðsögn</span><h2>Verkefni 1: Nýi síminn</h2><div class="two"><div><p>Embla er 18 ára og langar í nýjan síma sem kostar 200.000 kr. Hún á ekki fyrir honum og vill dreifa greiðslunum á 6 mánuði. Hún hefur tvo kosti:</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Kostur A: Greiðsludreifing á kreditkorti</th>
+<th>Kostur B: Lán í appi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><p>Vextir 15,45% á ári</p>
+<p>Jafnar afborganir í 6 mánuði</p>
+<p>Færslugjald 250 kr. á mánuði</p>
+<p>Ekkert lántökugjald</p></td>
+<td><p>Vextir 17% á ári</p>
+<p>Jafnar greiðslur í 6 mánuði</p>
+<p>Lántökugjald 3,98%, dregið frá útborgun</p>
+<p>Greiðslugjald 398 kr. á mánuði</p></td>
+</tr>
+</tbody>
+</table></div></div><div><ol type="1">
+<li><p>Hvað er lántökugjaldið í kosti B í krónum, og hvað fær Embla útborgað?</p></li>
+<li><p>Fylltu út greiðsluyfirlit fyrir kost A: höfuðstóll í byrjun mánaðar, vextir, afborgun, gjald og greiðsla fyrir hvern mánuð.</p></li>
+<li><p>Reiknaðu mánaðarlega greiðslu í kosti B. Notaðu =PMT(17%/12;6;-200000) og bættu greiðslugjaldinu við.</p></li>
+<li><p>Hvað greiðir Embla samtals, og hver er heildarkostnaðurinn í hvorum kosti?</p></li>
+<li><p>Reiknaðu ÁHK fyrir báða kosti (sjá aðferð að neðan).</p></li>
+<li><p>Hvorn kostinn myndir þú velja? Rökstyddu svarið með tölum.</p></li>
+</ol><div class="box"><p><strong>Svona finnur þú ÁHK í töflureikni</strong></p>
+<p>Skrifaðu greiðsluflæðið í einn dálk: fyrst útborgunina sem mínustölu, svo hverja greiðslu sem plústölu.</p>
+<p>=(1+IRR(B2:B8))^12-1</p>
+<p>IRR finnur vextina á mánuði og ^12 breytir þeim í hlutfall á ári. Ef allar greiðslur eru jafnar má líka nota =(1+RATE(6;-greiðsla;útborgun))^12-1.</p></div><h4>Aukaspurningar fyrir þau sem eru fljót</h4><ol type="1">
+<li><p>Embla tekur lán B til 12 mánaða í stað 6. Hvað gerist við mánaðarlegu greiðsluna, heildarkostnaðinn og ÁHK?</p></li>
+<li><p>Getur lán haft lægri heildarkostnað en annað lán, en samt hærri ÁHK? Útskýrðu með dæmi.</p></li>
+<li><p>Í stað þess að taka lán sparar Embla sömu upphæð og greiðslan væri í 6 mánuði. Hve mikið sparar hún miðað við kost B?</p></li>
+</ol></div></div></div></section>
+<section class="screen" data-lota="lota-1" data-short="Verkefni 2"><div class="fit"><span class="tag">Æfing með leiðsögn</span><h2>Verkefni 2: Útskriftarferðin</h2><div class="two"><div><p>Aron og vinir hans ætla í útskriftarferð til Tenerife. Ferðin kostar 400.000 kr. Aron á 30.000 kr. afgangs á mánuði af launum sínum og ber saman þrjá kosti:</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Kostur A: Bankalán í 12 mánuði</th>
+<th>Kostur B: Bankalán í 24 mánuði</th>
+<th>Kostur C: Yfirdráttur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><p>Vextir 12,05%</p>
+<p>Lántökugjald 2,90%, dregið frá útborgun</p>
+<p>Jafnar greiðslur</p></td>
+<td><p>Vextir 12,05%</p>
+<p>Lántökugjald 2,90%, dregið frá útborgun</p>
+<p>Jafnar greiðslur</p></td>
+<td><p>Vextir 15,50%</p>
+<p>Ekkert lántökugjald</p>
+<p>Aron greiðir 33.333 kr. niður á mánuði auk vaxta í 12 mánuði</p></td>
+</tr>
+</tbody>
+</table></div></div><div><ol type="1">
+<li><p>Reiknaðu lántökugjaldið og útborgunina í kostum A og B.</p></li>
+<li><p>Reiknaðu mánaðarlega greiðslu í kostum A og B með PMT.</p></li>
+<li><p>Reiknaðu fyrstu og síðustu greiðsluna í kosti C.</p></li>
+<li><p>Hvað greiðir Aron samtals, og hver er heildarkostnaðurinn í hverjum kosti?</p></li>
+<li><p>Reiknaðu ÁHK fyrir alla kostina.</p></li>
+<li><p>Hvaða kost ræður Aron við miðað við 30.000 kr. afgang á mánuði? Hvaða kost myndir þú mæla með?</p></li>
+</ol><h4>Aukaspurningar fyrir þau sem eru fljót</h4><ol type="1">
+<li><p>Af hverju er ÁHK lægri í kosti B en í kosti A, þó heildarkostnaðurinn sé hærri?</p></li>
+<li><p>Hve mikið hefði Aron þurft að spara á mánuði í 12 mánuði fyrir ferðina til að sleppa við lán? Hvað hefði hann sparað í krónum?</p></li>
+<li><p>Yfirdráttur hefur engan fastan endurgreiðslutíma. Hvað gerist ef Aron greiðir bara vextina en ekkert niður af yfirdrættinum?</p></li>
+</ol></div></div></div></section>
+<section class="screen" data-lota="lota-1" data-short="Lausnir"><div class="fit"><span class="tag">Kennari</span><h2>Lausnir fyrir kennara</h2><details class="reveal"><summary>Lausnir fyrir kennara (smelltu til að sýna)</summary><div class="reveal-body"><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Kostur</th>
+<th>Útborgað</th>
+<th>Samtals greitt</th>
+<th>Heildarkostnaður</th>
+<th>ÁHK</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V1 A: Greiðsludreifing, 6 mán.</td>
+<td>200.000 kr.</td>
+<td>210.513 kr.</td>
+<td>10.513 kr.</td>
+<td>19,5%</td>
+</tr>
+<tr>
+<td>V1 B: Lán í appi, 6 mán.</td>
+<td>192.040 kr.</td>
+<td>212.421 kr.</td>
+<td>20.381 kr.</td>
+<td>41,9%</td>
+</tr>
+<tr>
+<td>V1 B til 12 mán. (aukaspurning)</td>
+<td>192.040 kr.</td>
+<td>223.667 kr.</td>
+<td>31.627 kr.</td>
+<td>33,3%</td>
+</tr>
+<tr>
+<td>V2 A: Bankalán, 12 mán.</td>
+<td>388.400 kr.</td>
+<td>426.586 kr.</td>
+<td>38.186 kr.</td>
+<td>19,2%</td>
+</tr>
+<tr>
+<td>V2 B: Bankalán, 24 mán.</td>
+<td>388.400 kr.</td>
+<td>452.130 kr.</td>
+<td>63.730 kr.</td>
+<td>16,1%</td>
+</tr>
+<tr>
+<td>V2 C: Yfirdráttur, 12 mán.</td>
+<td>400.000 kr.</td>
+<td>433.583 kr.</td>
+<td>33.583 kr.</td>
+<td>16,6%</td>
+</tr>
+</tbody>
+</table></div><ul>
+<li><p>V1 A: fyrsta greiðsla 36.158 kr., síðasta 34.013 kr.. V1 B: greiðsla 35.403 kr. á mánuði með gjaldi, lántökugjald 7.960 kr.</p></li>
+<li><p>V1 B til 12 mán.: greiðsla 18.639 kr.. Greiðslan lækkar, heildarkostnaður hækkar en ÁHK lækkar, því lántökugjaldið dreifist á lengri tíma.</p></li>
+<li><p>V2 A: greiðsla 35.549 kr.. V2 B: greiðsla 18.839 kr.. V2 C: fyrsta greiðsla 38.500 kr., síðasta 33.764 kr..</p></li>
+<li><p>V2: Aron ræður aðeins við kost B (greiðsla undir 30.000 kr.). Kostir A og C eru yfir 30.000 kr. fyrstu mánuðina. Það er gott umræðuefni að ódýrasti kosturinn í krónum (C) er ekki sá sem hann ræður við.</p></li>
+<li><p>Lægri heildarkostnaður en hærri ÁHK: lán í stuttan tíma með háu lántökugjaldi (sjá V1 B til 6 og 12 mánaða).</p></li>
+</ul><p><em>Kjör byggja á verðskrám Landsbankans, Íslandsbanka og Netgíró í nóvember 2026. Lántökugjald er dregið frá útborgun. ÁHK reiknuð eftir aðferð reglugerðar nr. 965/2013.</em></p></div></details></div></section>
+<section class="screen" data-lota="lota-2" data-short="Lánin fjögur"><div class="fit"><span class="tag">Opinn fasi</span><h2>Sigurjón og Kata: fjögur húsnæðislán</h2><p>Sigurjón og Kata vilja kaupa íbúð og fá fjögur tilboð um sama lán. Lánin eru jafn há og jafn löng, en þau hegða sér mjög ólíkt.</p><div class="tw"><table>
+
+<tbody>
+<tr>
+<td>Íbúðarverð</td>
+<td>50.000.000 kr.</td>
+</tr>
+<tr>
+<td>Lán</td>
+<td>40.000.000 kr. (80% veðsetning)</td>
+</tr>
+<tr>
+<td>Lánstími</td>
+<td>40 ár (480 greiðslur)</td>
+</tr>
+<tr>
+<td>Vextir verðtryggðra lána</td>
+<td>4,50% (Landsbankinn, verðtryggð íbúðalán allt að 80% veðsetningu)</td>
+</tr>
+<tr>
+<td>Vextir óverðtryggðra lána</td>
+<td>8,75% (Landsbankinn, fastir vextir í 5 ár, allt að 80% veðsetningu)</td>
+</tr>
+<tr>
+<td>Verðbólga</td>
+<td>4% á ári allan lánstímann</td>
+</tr>
+</tbody>
+</table></div><div class="box"><p><strong>Spurningar (opinn fasi)</strong></p>
+<p>1. Hvað er líkt með lánunum? Hvað er ólíkt?</p>
+<p>2. Hvað kemur á óvart?</p>
+<p>3. Hvaða lán myndir þú vilja hafa fyrstu fimm árin? En eftir 30 ár?</p></div></div></section>
+<section class="screen" data-lota="lota-2" data-short="Yfirlit"><div class="fit"><span class="tag">Opinn og lokaður fasi</span><h2>Lánin fjögur borin saman</h2><div class="tw"><table>
+
+<thead>
+<tr>
+<th></th>
+<th>Verðtryggt, jafnar greiðslur</th>
+<th>Verðtryggt, jafnar afborganir</th>
+<th>Óverðtryggt, jafnar greiðslur</th>
+<th>Óverðtryggt, jafnar afborganir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fyrsta greiðsla</td>
+<td>180.414 kr.</td>
+<td>234.097 kr.</td>
+<td>300.868 kr.</td>
+<td>375.000 kr.</td>
+</tr>
+<tr>
+<td>Greiðsla eftir 10 ár</td>
+<td>266.185 kr.</td>
+<td>290.344 kr.</td>
+<td>300.868 kr.</td>
+<td>302.691 kr.</td>
+</tr>
+<tr>
+<td>Greiðsla eftir 20 ár</td>
+<td>394.019 kr.</td>
+<td>347.613 kr.</td>
+<td>300.868 kr.</td>
+<td>229.774 kr.</td>
+</tr>
+<tr>
+<td>Hæsta greiðsla</td>
+<td>863.344 kr.</td>
+<td>405.035 kr.</td>
+<td>300.868 kr.</td>
+<td>375.000 kr.</td>
+</tr>
+<tr>
+<td>Eftirstöðvar eftir 10 ár</td>
+<td>52,5 m.kr.</td>
+<td>44,4 m.kr.</td>
+<td>38,2 m.kr.</td>
+<td>30,0 m.kr.</td>
+</tr>
+<tr>
+<td>Samtals greitt (krónur hvers tíma)</td>
+<td>209,5 m.kr.</td>
+<td>162,7 m.kr.</td>
+<td>144,4 m.kr.</td>
+<td>110,1 m.kr.</td>
+</tr>
+<tr>
+<td>Samtals greitt á föstu verðlagi</td>
+<td>86,3 m.kr.</td>
+<td>76,1 m.kr.</td>
+<td>72,8 m.kr.</td>
+<td>64,4 m.kr.</td>
+</tr>
+</tbody>
+</table></div><p><em>Á föstu verðlagi: allar greiðslur umreiknaðar í krónur dagsins í dag, svo hægt sé að bera þær saman þrátt fyrir verðbólgu.</em></p></div></section>
+<section class="screen" data-lota="lota-2" data-short="Verðbólgan" data-nofit="1"><div class="fit"><span class="tag">Lokaður fasi</span><h2>Hvað gerir verðbólgan?</h2><div class="calc">
+  <form class="fields" id="m-form" autocomplete="off">
+    <label for="m-i">Verðbólga á ári: <span class="infl-val" id="m-i-val">4,0%</span>
+      <input id="m-i" type="range" min="0" max="10" step="0.5" value="4"></label>
+    <label for="m-L">Lánsfjárhæð (m.kr.)<input id="m-L" type="number" min="1" step="1" value="40"></label>
+    <label for="m-y">Lánstími (ár)<select id="m-y"><option>25</option><option>30</option><option selected>40</option></select></label>
+    <label for="m-vt">Vextir verðtryggt (%)<input id="m-vt" type="number" min="0" step="0.05" value="4.5"></label>
+    <label for="m-ovt">Vextir óverðtryggt (%)<input id="m-ovt" type="number" min="0" step="0.05" value="8.75"></label>
+    <p class="note">Blátt er verðtryggt, appelsínugult óverðtryggt. Heil lína er jafnar greiðslur, brotin lína jafnar afborganir. Íbúðarverð er lánið deilt með 0,8 og hækkar með verðbólgu. Óverðtryggðu vextirnir haldast fastir allan lánstímann, en í raun eru þeir oftast fastir í 3 til 5 ár.</p>
+  </form>
+  <div class="chartcol">
+    <div class="seg" role="group" aria-label="Hvað á að sýna">
+      <button type="button" data-v="greidsla" aria-pressed="true">Mánaðarleg greiðsla</button>
+      <button type="button" data-v="fast" aria-pressed="false">Á föstu verðlagi</button>
+      <button type="button" data-v="eftir" aria-pressed="false">Eftirstöðvar</button>
+      <button type="button" data-v="eign" aria-pressed="false">Eignamyndun</button>
+      <button type="button" data-v="tafla" aria-pressed="false">Samanburðartafla</button>
+    </div>
+    <div id="m-chartwrap">
+      <div class="legend" id="m-legend"></div>
+      <svg class="chart" id="m-chart" viewBox="0 0 640 300" role="img" aria-label="Línurit af lánunum fjórum"></svg>
+      <div class="readout" id="m-read">Færðu bendilinn yfir línuritið til að sjá tölur fyrir hvert ár.</div>
+    </div>
+    <div class="tw" id="m-tablewrap" hidden><table id="m-table"></table></div>
+  </div>
+</div>
+</div></section>
+<section class="screen" data-lota="lota-2" data-short="Önnur verðbólga"><div class="fit"><span class="tag">Lokaður fasi</span><h2>Ef verðbólgan er önnur</h2><p>Verðtryggt lán með jöfnum greiðslum við mismunandi verðbólgu. Óverðtryggðu lánin breytast ekki, því vextir þeirra eru fastir í þessu dæmi.</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>Verðtryggt, jafnar greiðslur</th>
+<th>Verðbólga 2,5%</th>
+<th>Verðbólga 4%</th>
+<th>Verðbólga 6%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fyrsta greiðsla</td>
+<td>180.196 kr.</td>
+<td>180.414 kr.</td>
+<td>180.700 kr.</td>
+</tr>
+<tr>
+<td>Greiðsla eftir 10 ár</td>
+<td>230.191 kr.</td>
+<td>266.185 kr.</td>
+<td>322.039 kr.</td>
+</tr>
+<tr>
+<td>Eftirstöðvar eftir 10 ár</td>
+<td>45,4 m.kr.</td>
+<td>52,5 m.kr.</td>
+<td>63,6 m.kr.</td>
+</tr>
+<tr>
+<td>Samtals greitt (krónur hvers tíma)</td>
+<td>147,4 m.kr.</td>
+<td>209,5 m.kr.</td>
+<td>344,7 m.kr.</td>
+</tr>
+<tr>
+<td>Samtals greitt á föstu verðlagi</td>
+<td>86,3 m.kr.</td>
+<td>86,3 m.kr.</td>
+<td>86,3 m.kr.</td>
+</tr>
+</tbody>
+</table></div><p><em>Samtals á föstu verðlagi er það sama í öllum dálkum, því verðtryggt lán fylgir verðlaginu. Í krónum hvers tíma virðist lánið þó margfalt dýrara. Það er gott umræðuefni.</em></p><details class="fold"><summary>Forsendur og fyrirvarar</summary><div><ul>
+<li><p>Vextir samkvæmt vaxtatöflu Landsbankans frá 28.07.2026. Nýrri vaxtatafla (27.10.2026) var ekki aðgengileg við gerð dæmanna.</p></li>
+<li><p>Vextir eru hafðir fastir allan lánstímann og verðbólga jöfn. Í raun breytast vextir óverðtryggðra lána eftir fastvaxtatímabil, og verðbólga sveiflast. Verðbólga var 5,9% í október 2026.</p></li>
+<li><p>Lántökugjald og greiðslugjöld eru ekki tekin með. Við fyrstu kaup er lántökugjald fellt niður hjá Landsbankanum.</p></li>
+<li><p>Íbúðarverð hækkar með verðbólgu í eignamyndunarmyndinni.</p></li>
+</ul></div></details></div></section>
+<section class="screen" data-lota="lota-2" data-short="Reiknivél 1"><div class="fit"><span class="tag">Bein kennsla</span><h2>Leiðbeiningar: húsnæðislánareiknivél banka</h2><p>Með reiknivélinni sérðu hvað íbúðalán kostar á mánuði og samtals. Hún notar vexti bankans eins og þeir eru í dag. Allir bankar og HMS eru með svipaðar reiknivélar.</p><div class="box"><p><strong>Athugið (fyrir kennara)</strong></p>
+</div><h3>Hvar finn ég reiknivélina?</h3><blockquote>
+<p>islandsbanki.is/is/reiknivel/husnaedislan/husnaedislanareiknivel</p>
+</blockquote><p>Þú getur líka farið á islandsbanki.is og leitað að „húsnæðislánareiknivél“.</p><h3>Skref fyrir skref</h3><ol type="1">
+<li><p><strong>Kaupverð eða verðmat íbúðar:</strong> Sláðu inn verð íbúðarinnar.</p></li>
+<li><p><strong>Lánsfjárhæð:</strong> Sláðu inn hve mikið þú vilt fá lánað. Reiknivélin sýnir oft veðsetningarhlutfallið, það er lánið sem hlutfall af verði íbúðarinnar.</p></li>
+<li><p><strong>Fyrstu kaup:</strong> Merktu við ef þetta eru fyrstu kaup. Þá getur lánið verið hærra hlutfall af verðinu og lántökugjald lægra.</p></li>
+<li><p><strong>Tegund láns:</strong> Veldu óverðtryggt, verðtryggt eða blöndu af báðu.</p></li>
+<li><p><strong>Vextir:</strong> Veldu fasta eða breytilega vexti, og hve lengi vextirnir eru fastir.</p></li>
+<li><p><strong>Lánstími:</strong> Veldu fjölda ára, til dæmis 25 eða 40.</p></li>
+<li><p><strong>Greiðsluform:</strong> Veldu jafnar greiðslur eða jafnar afborganir, ef reiknivélin býður upp á það.</p></li>
+<li><p><strong>Lestu niðurstöðuna:</strong> Skráðu fyrstu greiðslu, heildargreiðslur, heildarkostnað og ÁHK ef hún er sýnd.</p></li>
+<li><p><strong>Finndu forsendurnar:</strong> Á verðtryggðu láni þarf reiknivélin að gefa sér verðbólgu. Leitaðu að því hvaða verðbólgu hún notar.</p></li>
+</ol></div></section>
+<section class="screen" data-lota="lota-2" data-short="Reiknivél 2"><div class="fit"><span class="tag">Bein kennsla</span><h2>Hvað á ég að skrá?</h2><div class="tw"><table>
+
+<thead>
+<tr>
+<th></th>
+<th>Lán 1</th>
+<th>Lán 2</th>
+<th>Lán 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tegund láns og greiðsluform</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Vextir</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Fyrsta greiðsla</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Heildargreiðslur</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ÁHK (ef sýnd)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Verðbólguforsenda</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div><h4>Aðrar reiknivélar til samanburðar</h4><ul>
+<li><p>Landsbankinn: landsbankinn.is, undir Lán og heimildir, Íbúðalán.</p></li>
+<li><p>Arion banki: arionbanki.is, undir Íbúðalán.</p></li>
+<li><p>HMS: lánareiknivél á island.is (Húsnæðislán hjá HMS).</p></li>
+<li><p>Aurbjörg: aurbjorg.is ber saman vexti húsnæðislána hjá bönkum og lífeyrissjóðum.</p></li>
+</ul></div></section>
+<section class="screen" data-lota="lota-2" data-short="Verkefni"><div class="fit"><span class="tag">Æfing með leiðsögn</span><h2>Verkefni: hvað kostar íbúð Emblu og Arons?</h2><div class="two"><div><p>Embla og Aron ætla að kaupa sína fyrstu íbúð saman. Íbúðin kostar 55.000.000 kr. og þau þurfa 45.000.000 kr. lán til 40 ára. Samanlögð útborguð laun þeirra eru 750.000 kr. á mánuði.</p><p>Notið húsnæðislánareiknivél banka (sjá leiðbeiningar) og fyllið út svarblaðið.</p></div><div><ol type="1">
+<li><p>Reiknaðu óverðtryggt lán með jöfnum greiðslum. Hver er fyrsta greiðslan, og hvað greiða Embla og Aron samtals?</p></li>
+<li><p>Reiknaðu verðtryggt lán með jöfnum greiðslum. Hver er fyrsta greiðslan? Hvað segir reiknivélin um eftirstöðvar eftir 10 ár og samtals greitt?</p></li>
+<li><p>Hvaða verðbólgu gerir reiknivélin ráð fyrir? Breyttu henni ef hægt er (til dæmis í 2,5% og 6%). Hvað gerist við verðtryggða lánið?</p></li>
+<li><p>Hækkaðu vexti óverðtryggða lánsins um 1 prósentustig. Hvað hækkar mánaðarleg greiðsla mikið?</p></li>
+<li><p>Skoðaðu jafnar afborganir í stað jafnra greiðslna. Hvað breytist?</p></li>
+<li><p>Reglur Seðlabankans leyfa fyrstu kaupendum að greiða mest 40% af útborguðum launum í afborganir af íbúðalánum. Hvaða lán standast þá reglu?</p></li>
+</ol><h4>Aukaspurningar</h4><ol type="1">
+<li><p>Styttu lánstímann í 25 ár. Hvað gerist við greiðsluna og heildarkostnaðinn?</p></li>
+<li><p>Skoðaðu blandað lán, til dæmis helming verðtryggt og helming óverðtryggt. Af hverju velja margir þá leið?</p></li>
+<li><p>Berðu saman vexti tveggja banka (til dæmis á aurbjorg.is). Hvað munar miklu á mánaðarlegri greiðslu?</p></li>
+<li><p>Hvaða lán mynduð þið velja fyrir Emblu og Aron, og hvað gæti farið úrskeiðis með það lán?</p></li>
+</ol></div></div></div></section>
+<section class="screen" data-lota="lota-2" data-short="Svarblað"><div class="fit"><span class="tag">Æfing með leiðsögn</span><h2>Svarblað</h2><div class="tw"><table>
+
+<thead>
+<tr>
+<th></th>
+<th>Fyrsta greiðsla</th>
+<th>Eftirstöðvar eftir 10 ár</th>
+<th>Samtals greitt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Óverðtryggt, jafnar greiðslur</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Verðtryggt, jafnar greiðslur</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Verðtryggt, verðbólga 2,5%</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Verðtryggt, verðbólga 6%</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Óverðtryggt, vextir +1 prósentustig</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Jafnar afborganir (tegund: ______)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div><p>40% af útborguðum launum eru ______ kr. Lán sem standast regluna: ____________________________</p></div></section>
+<section class="screen" data-lota="lota-2" data-short="Viðmið"><div class="fit"><span class="tag">Kennari</span><h2>Viðmið fyrir kennara</h2><details class="reveal"><summary>Viðmið fyrir kennara (smelltu til að sýna)</summary><div class="reveal-body"><p>Tölurnar eru reiknaðar með vöxtum Landsbankans úr sýnidæminu um húsnæðislán (verðtryggt 4,50%, óverðtryggt 8,75%) og 4% verðbólgu nema annað sé tekið fram. Reiknivélar bankanna nota sína eigin vexti og forsendur, svo svör nemenda verða önnur en sambærileg.</p><div class="tw"><table>
+
+<thead>
+<tr>
+<th>45 m.kr. til 40 ára</th>
+<th>Fyrsta greiðsla</th>
+<th>Eftirstöðvar eftir 10 ár</th>
+<th>Samtals greitt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Óverðtryggt, jafnar greiðslur</td>
+<td>338.477 kr.</td>
+<td>43,0 m.kr.</td>
+<td>162,5 m.kr.</td>
+</tr>
+<tr>
+<td>Verðtryggt, jafnar greiðslur, 4%</td>
+<td>202.966 kr.</td>
+<td>59,1 m.kr.</td>
+<td>235,7 m.kr.</td>
+</tr>
+<tr>
+<td>Verðtryggt, verðbólga 2,5%</td>
+<td>202.720 kr.</td>
+<td>51,1 m.kr.</td>
+<td>165,8 m.kr.</td>
+</tr>
+<tr>
+<td>Verðtryggt, verðbólga 6%</td>
+<td>203.288 kr.</td>
+<td>71,5 m.kr.</td>
+<td>387,8 m.kr.</td>
+</tr>
+<tr>
+<td>Óverðtryggt, vextir 9,75%</td>
+<td>373.301 kr.</td>
+<td>43,4 m.kr.</td>
+<td>179,2 m.kr.</td>
+</tr>
+<tr>
+<td>Óverðtryggt, jafnar afborganir</td>
+<td>421.875 kr.</td>
+<td>33,8 m.kr.</td>
+<td>123,9 m.kr.</td>
+</tr>
+<tr>
+<td>Verðtryggt, jafnar afborganir</td>
+<td>263.359 kr.</td>
+<td>50,0 m.kr.</td>
+<td>183,0 m.kr.</td>
+</tr>
+<tr>
+<td>Óverðtryggt til 25 ára</td>
+<td>369.965 kr.</td>
+<td>37,0 m.kr.</td>
+<td>111,0 m.kr.</td>
+</tr>
+<tr>
+<td>Verðtryggt til 25 ára</td>
+<td>250.943 kr.</td>
+<td>48,4 m.kr.</td>
+<td>127,7 m.kr.</td>
+</tr>
+</tbody>
+</table></div><ul>
+<li><p>40% af 750.000 kr. eru 300.000 kr. Óverðtryggt lán með jöfnum greiðslum (um 338.000 kr.) stenst ekki regluna, en verðtryggt lán (um 203.000 kr.) gerir það. Þetta skýrir af hverju margir fyrstu kaupendur velja verðtryggt eða blandað lán.</p></li>
+<li><p>Fyrsta greiðsla verðtryggðs láns breytist nánast ekkert með verðbólgu, en eftirstöðvar og samtals greitt hækka mikið. Nemendur sjá muninn ekki fyrr en þeir skoða eftirstöðvarnar.</p></li>
+<li><p>Bankinn reiknar greiðslubyrðarhlutfall eftir reglum Seðlabankans, sem eru ekki endilega sömu kjör og bjóðast (island.is). Svar nemenda er því einföldun.</p></li>
+</ul></div></details></div></section>
+<section class="screen" data-lota="lota-3" data-short="Sviðsmyndin"><div class="fit"><span class="tag">Problem-Based Learning</span><h2>Sviðsmynd: Sigurjón og Kata kaupa íbúð</h2><div class="two"><div><div class="box">Sigurjón og Kata eru 27 ára og búa í leiguíbúð. Þau langar að kaupa sína fyrstu íbúð saman og hafa fundið þriggja herbergja íbúð á höfuðborgarsvæðinu.</div><h3>Staðan þeirra</h3><div class="tw"><table>
+
+<tbody>
+<tr>
+<td>Útborguð laun samtals</td>
+<td>1.000.000 kr. á mánuði</td>
+</tr>
+<tr>
+<td>Sparnaður</td>
+<td>7.500.000 kr.</td>
+</tr>
+<tr>
+<td>Bíll</td>
+<td>Eiga einn bíl. Eftirstöðvar bílaláns 1.800.000 kr., greiðsla 42.000 kr. á mánuði</td>
+</tr>
+<tr>
+<td>Íbúðin</td>
+<td>Kaupverð 62.000.000 kr., fasteignamat 57.000.000 kr.</td>
+</tr>
+<tr>
+<td>Fyrstu kaup</td>
+<td>Já, hvorugt þeirra hefur átt íbúð áður</td>
+</tr>
+</tbody>
+</table></div><p><em>Í stað íbúðarinnar hér að ofan má finna raunverulega íbúð á fasteignavef og nota hana.</em></p></div><div><h3>Spurningin</h3><p><strong>Hvaða lán ættu Sigurjón og Kata að taka, og ráða þau við það?</strong></p><h3>Verkefnið</h3><ol type="1">
+<li><p><strong>Útborgun og kostnaður:</strong> Fyrstu kaupendur mega fá lánað fyrir allt að 90% af kaupverði. Hve mikið þurfa þau að greiða sjálf? Hver er stimpilgjaldið (0,8% af fasteignamati, en hálft við fyrstu kaup)? Duga 7,5 milljónir?</p></li>
+<li><p><strong>Hámark greiðslubyrðar:</strong> Við fyrstu kaup má greiðsla af íbúðalánum vera mest 40% af útborguðum launum. Hve há má greiðslan vera?</p></li>
+<li><p><strong>Lánin:</strong> Farið á vefi a.m.k. tveggja banka og reiknið óverðtryggt lán, verðtryggt lán og blandað lán. Skráið fyrstu greiðslu, eftirstöðvar eftir 10 ár og samtals greitt.</p></li>
+<li><p><strong>Greiðslumat:</strong> Lesið um greiðslumat í Farsælum skrefum í fjármálum. Hvað er tekið með í greiðslumati og hvaða áhrif hefur bílalánið?</p></li>
+<li><p><strong>Áhætta:</strong> Hvað gerist ef vextir hækka um 2 prósentustig eftir fastvaxtatímabilið? Ef verðbólga verður 6%? Ef annað þeirra fer í fæðingarorlof og tekjurnar lækka?</p></li>
+<li><p><strong>Tillaga:</strong> Hvaða lán mælið þið með og af hverju? Notið tölurnar til að rökstyðja.</p></li>
+</ol><h4>Kynning (4 til 5 mínútur)</h4><ul>
+<li><p>Hvaða lán mælið þið með?</p></li>
+<li><p>Hver er greiðslan á mánuði, og stenst hún 40% regluna?</p></li>
+<li><p>Hvað kostar lánið samtals, og hver er stærsta áhættan?</p></li>
+</ul><h4>Fyrir þau sem vilja kafa dýpra</h4><ul>
+<li><p>Ættu þau að greiða bílalánið upp fyrst með hluta af sparnaðinum? Hvaða áhrif hefði það á útborgunina og greiðslumatið?</p></li>
+<li><p>Kannið hlutdeildarlán HMS á island.is. Uppfylla Sigurjón og Kata skilyrðin?</p></li>
+<li><p>Hvað myndi ódýrari tveggja herbergja íbúð breyta?</p></li>
+<li><p>Berið saman kostnað við að kaupa og að leigja áfram í 5 ár.</p></li>
+</ul></div></div></div></section>
+<section class="screen" data-lota="lota-3" data-short="Matskvarði"><div class="fit"><span class="tag">Námsmat</span><h2>Matskvarði fyrir lokaverkefnið</h2><p class="lead">Lokaverkefni: rökstudd tillaga hópsins um húsnæðislán fyrir Sigurjón og Kötu. Matskvarðinn er kynntur í upphafi lotu, svo allir vita hvað er metið.</p>
+<div class="tw"><table class="rubric">
+<thead><tr><th>Val á lánsformi</th><th>Framúrskarandi</th><th>Gott</th><th>Sæmilegt</th><th>Ábótavant</th></tr></thead>
+<tbody>
+<tr><td><strong>Hugtök</strong><br>25%</td><td>Útskýrir hugtökin með eigin orðum og tengir þau við ákvörðunina</td><td>Notar hugtökin rétt í verkefninu</td><td>Notar hugtök rangt eða sleppir þeim</td><td>Engin hugtakanotkun</td></tr>
+<tr><td><strong>Útreikningar og samanburður</strong><br>25%</td><td>Útskýrir hvernig niðurstaðan fæst og hvað hefur mest áhrif á hana</td><td>Reiknar heildarkostnað og ber lánin rétt saman</td><td>Útreikningar að mestu réttir en samanburður ófullnægjandi</td><td>Útreikninga vantar eða þeir eru að mestu rangir</td></tr>
+<tr><td><strong>Greiðslubyrði</strong><br>25%</td><td>Metur hvort greiðslubyrðin sé viðráðanleg og nefnir áhættu, til dæmis verðbólgu</td><td>Reiknar greiðslubyrði í hlutfalli við útborguð laun</td><td>Reiknar greiðslubyrði en setur ekki í samhengi við laun</td><td>Metur ekki greiðslubyrði</td></tr>
+<tr><td><strong>Rökstuðningur og kynning</strong><br>25%</td><td>Rökstuðningur vegur kosti og galla valkosta og er kynntur skýrt</td><td>Tillaga með rökstuðningi sem byggir á útreikningum</td><td>Tillaga með rökstuðningi sem stenst ekki</td><td>Tillaga án rökstuðnings</td></tr>
+</tbody></table></div>
+</div></section>
+<section class="screen" data-lota="lota-3" data-short="Viðmið"><div class="fit"><span class="tag">Kennari</span><h2>Viðmið fyrir kennara</h2><details class="reveal"><summary>Viðmið fyrir kennara (smelltu til að sýna)</summary><div class="reveal-body"><div class="tw"><table>
+
+<tbody>
+<tr>
+<td>Lán (90% af 62 m.kr.)</td>
+<td>55.800.000 kr.</td>
+</tr>
+<tr>
+<td>Útborgun (10%)</td>
+<td>6.200.000 kr.</td>
+</tr>
+<tr>
+<td>Stimpilgjald (0,4% af 57 m.kr.)</td>
+<td>228.000 kr.</td>
+</tr>
+<tr>
+<td>Hámark greiðslu (40% af 1.000.000 kr.)</td>
+<td>400.000 kr.</td>
+</tr>
+<tr>
+<td>Óverðtryggt, jafnar greiðslur, 9,05%, 40 ár</td>
+<td>432.569 kr. (yfir hámarki)</td>
+</tr>
+<tr>
+<td>Verðtryggt, jafnar greiðslur, 4,65%, 40 ár</td>
+<td>257.100 kr. fyrsta greiðsla</td>
+</tr>
+</tbody>
+</table></div><ul>
+<li><p>Útborgun og stimpilgjald eru um 6,4 m.kr., svo sparnaðurinn dugar, með svigrúmi fyrir öðrum kaupkostnaði (til dæmis þinglýsingu og flutningum).</p></li>
+<li><p>Óverðtryggt lán með jöfnum greiðslum fer yfir 40% hámarkið. Verðtryggt eða blandað lán stenst það. Þetta er kjarni umræðunnar: lægri greiðsla núna á móti hægari eignamyndun og verðbólguáhættu.</p></li>
+<li><p>Hjá Landsbankanum eru verðtryggð íbúðalán aðeins í boði að 85% veðsetningu (vaxtatafla 28.07.2026). Með 90% láni þarf því blöndu. Vextir 9,05% eru óverðtryggðir 5 ára fastir vextir allt að 90% veðsetningu.</p></li>
+<li><p>Bankinn reiknar greiðslubyrðarhlutfall eftir reglum Seðlabankans, sem eru ekki endilega sömu kjör og bjóðast. Bílalánið hefur áhrif í greiðslumati, því þar eru allar skuldir og framfærsla tekin með.</p></li>
+<li><p>Stimpilgjald: samkvæmt lögum um stimpilgjald greiðist hálft gjald við fyrstu kaup. Á Alþingi liggur fyrir frumvarp um að fella gjaldið niður. Kannið stöðuna áður en kennt er.</p></li>
+</ul></div></details></div></section>
+<section class="screen" data-lota="hugtok" data-short="Hugtakalisti" data-nofit="1"><div class="fit"><h2>Hugtakalisti á íslensku og ensku</h2><div class="gtools">
+  <label for="g-filter" class="sr">Leita að hugtaki</label>
+  <input id="g-filter" class="filter" type="search" placeholder="Leita, til dæmis vextir, ÁHK eða inflation">
+  <div class="gbtns">
+    <button type="button" class="btn" id="g-xlsx">Sækja sem Excel</button>
+    <button type="button" class="btn" id="g-docx">Sækja sem PDF</button>
+  </div>
+</div>
+<p class="note" id="g-msg" role="status"></p>
+<div class="tw gtable"><table id="g-table"></table></div>
+</div></section>
+</main>
+
+<div class="pager">
+  <button type="button" class="navbtn" id="prev" aria-label="Fyrri skjár">←</button>
+  <div class="pills" id="pills"></div>
+  <button type="button" class="navbtn" id="next" aria-label="Næsti skjár">→</button>
+  <button type="button" class="navbtn" id="full">Fullur skjár</button>
+</div>
+
+<script>
+var GLOSSARY = [{"hugtak": "Höfuðstóll", "en": "Principal", "skyring": "Upphæðin sem þú skuldar. Hún lækkar þegar þú greiðir afborganir.", "explanation": "The amount you owe. It goes down as you make principal repayments.", "daemi": "Þú tekur 300.000 kr. lán. Höfuðstóllinn er 300.000 kr.", "hopur": 1}, {"hugtak": "Vextir", "en": "Interest", "skyring": "Gjaldið sem þú greiðir fyrir að fá peninga lánaða. Vextir eru gefnir upp sem hlutfall á ári og reiknast af höfuðstólnum.", "explanation": "The price you pay for borrowing money. Interest is stated as a yearly percentage and is calculated on the principal.", "daemi": "12% vextir af 300.000 kr. eru um 3.000 kr. fyrsta mánuðinn.", "hopur": 1}, {"hugtak": "Lántökugjald", "en": "Loan fee, arrangement fee", "skyring": "Gjald sem er greitt einu sinni þegar lánið er tekið, oftast hlutfall af láninu. Það er oft dregið frá því sem þú færð útborgað.", "explanation": "A one-off fee paid when the loan is taken, usually a percentage of the loan. It is often deducted from the amount you receive.", "daemi": "2,90% af 300.000 kr. eru 8.700 kr. Þú færð 291.300 kr.", "hopur": 1}, {"hugtak": "Afborgun", "en": "Principal repayment", "skyring": "Sá hluti greiðslunnar sem lækkar höfuðstólinn.", "explanation": "The part of each payment that reduces the principal.", "daemi": "Greiðslan er 26.662 kr. Af því eru 23.649 kr. afborgun.", "hopur": 1}, {"hugtak": "Greiðsla", "en": "Payment, instalment", "skyring": "Það sem þú borgar í hverjum mánuði: afborgun, vextir og gjöld. Á verðtryggðu láni bætast verðbætur við.", "explanation": "What you pay each month: principal repayment, interest and fees. On an indexed loan the indexation adjustment is added.", "daemi": "26.662 kr. á mánuði í 12 mánuði.", "hopur": 1}, {"hugtak": "ÁHK (árleg hlutfallstala kostnaðar)", "en": "APR, annual percentage rate of charge", "skyring": "Allur kostnaður lánsins (vextir, lántökugjald og önnur gjöld) sýndur sem hlutfall á ári. Lánveitendum er skylt að gefa hana upp. Best til að bera saman lán.", "explanation": "The total cost of the loan (interest, loan fee and other charges) shown as a yearly percentage. Lenders must state it. It is the best figure for comparing loans.", "daemi": "Vextir eru 12,05% en ÁHK er 19,2% vegna lántökugjaldsins.", "hopur": 1}, {"hugtak": "Greiðslubyrði", "en": "Debt service, monthly loan payments", "skyring": "Hve mikið þú greiðir af lánum á mánuði. Oft borið saman við útborguð laun.", "explanation": "How much you pay on loans each month. Often compared with take-home pay.", "daemi": "Greiðsla 300.000 kr. af 1.000.000 kr. launum er 30% greiðslubyrði.", "hopur": 1}, {"hugtak": "Verðtrygging (almennt)", "en": "Indexation", "skyring": "Fjárhæð er tengd vísitölu neysluverðs, svo hún hækkar þegar verðlag hækkar. Þannig heldur hún verðgildi sínu.", "explanation": "An amount is linked to the consumer price index, so it rises when prices rise. That way it keeps its real value.", "daemi": "Ef verðlag hækkar um 4% hækkar verðtryggð fjárhæð um 4%.", "hopur": 1}, {"hugtak": "Verðtryggt lán", "en": "Inflation-indexed loan", "skyring": "Höfuðstóllinn hækkar með verðbólgu, því verðbætur bætast við hann. Vextirnir eru lægri en á óverðtryggðu láni, en lánið getur hækkað í krónum fyrstu árin.", "explanation": "The principal rises with inflation because indexation adjustments are added to it. The interest rate is lower than on a non-indexed loan, but the balance can grow in krónur during the first years.", "daemi": "40 m.kr. verðtryggt lán getur verið hærra en 40 m.kr. eftir 10 ár.", "hopur": 1}, {"hugtak": "Óverðtryggt lán", "en": "Non-indexed loan", "skyring": "Höfuðstóllinn hækkar ekki með verðbólgu. Vextirnir eru hærri, því þeir eiga að mæta verðbólgunni.", "explanation": "The principal does not rise with inflation. The interest rate is higher because it has to cover inflation.", "daemi": "Greiðslan er hærri í byrjun, en lánið lækkar strax.", "hopur": 1}, {"hugtak": "Jafnar afborganir", "en": "Equal principal payments", "skyring": "Afborgunin er sú sama í hverjum mánuði. Vextirnir lækka eftir því sem höfuðstóllinn lækkar, svo greiðslan er hæst fyrst og lækkar svo (á óverðtryggðu láni).", "explanation": "The principal repayment is the same every month. Interest falls as the principal falls, so the payment is highest at the start and then goes down (on a non-indexed loan).", "daemi": "300.000 kr. á 12 mánuðum: afborgun 25.000 kr. á mánuði auk vaxta.", "hopur": 1}, {"hugtak": "Jafnar greiðslur", "en": "Annuity, equal payments", "skyring": "Greiðslan er sú sama í hverjum mánuði (á óverðtryggðu láni). Fyrst fer mest í vexti, síðan meira og meira í afborgun.", "explanation": "The payment is the same every month (on a non-indexed loan). At first most of it goes to interest, then more and more goes to repaying the principal.", "daemi": "26.662 kr. á mánuði allan lánstímann.", "hopur": 1}, {"hugtak": "Heildarkostnaður láns", "en": "Total cost of credit", "skyring": "Allt sem þú greiðir umfram lánsfjárhæðina: vextir, lántökugjald og önnur gjöld (og verðbætur).", "explanation": "Everything you pay on top of the amount borrowed: interest, loan fee, other charges (and indexation adjustments).", "daemi": "Þú greiðir 328.106 kr. af 300.000 kr. láni. Heildarkostnaður er 28.106 kr.", "hopur": 2}, {"hugtak": "Lánstími", "en": "Loan term", "skyring": "Hve lengi þú ert að greiða lánið.", "explanation": "How long it takes to pay back the loan.", "daemi": "Íbúðalán eru oft til 25 eða 40 ára.", "hopur": 2}, {"hugtak": "Tilkynningar- og greiðslugjald", "en": "Payment fee", "skyring": "Gjald sem er greitt með hverri greiðslu.", "explanation": "A fee paid with every payment.", "daemi": "250 kr. á mánuði í 12 mánuði eru 3.000 kr.", "hopur": 2}, {"hugtak": "Verðbólga", "en": "Inflation", "skyring": "Hækkun verðlags. Þá færðu minna fyrir hverja krónu.", "explanation": "A rise in the general price level. Each króna then buys less.", "daemi": "Verðbólga var 5,9% í október 2026.", "hopur": 2}, {"hugtak": "Vísitala neysluverðs", "en": "Consumer price index (CPI)", "skyring": "Mæling Hagstofu Íslands á verði vöru og þjónustu sem heimili kaupa. Verðtryggð lán fylgja henni.", "explanation": "Statistics Iceland's measure of the prices of goods and services that households buy. Indexed loans follow it.", "daemi": "", "hopur": 2}, {"hugtak": "Verðbætur", "en": "Indexation adjustment", "skyring": "Hækkunin sem bætist á verðtryggt lán vegna verðbólgu.", "explanation": "The increase added to an indexed loan because of inflation.", "daemi": "", "hopur": 2}, {"hugtak": "Fastir og breytilegir vextir", "en": "Fixed and variable interest rate", "skyring": "Fastir vextir breytast ekki í ákveðinn tíma. Breytilegir vextir geta breyst, til dæmis með stýrivöxtum Seðlabankans.", "explanation": "A fixed rate does not change for a set period. A variable rate can change, for example with the Central Bank's policy rate.", "daemi": "Vextir festir í 5 ár.", "hopur": 2}, {"hugtak": "Veð", "en": "Collateral, security", "skyring": "Eign sem lánveitandinn getur selt ef lánið er ekki greitt. Íbúðalán eru með veði í íbúðinni.", "explanation": "An asset the lender can sell if the loan is not repaid. Mortgages are secured on the home.", "daemi": "", "hopur": 2}, {"hugtak": "Veðsetningarhlutfall", "en": "Loan-to-value ratio (LTV)", "skyring": "Lánið sem hlutfall af verði íbúðarinnar. Hámark er 80% almennt og 90% við fyrstu kaup.", "explanation": "The loan as a percentage of the property price. The maximum is generally 80%, and 90% for first-time buyers.", "daemi": "45 m.kr. lán af 50 m.kr. íbúð er 90%.", "hopur": 2}, {"hugtak": "Greiðslubyrðarhlutfall", "en": "Debt-service-to-income ratio (DSTI)", "skyring": "Greiðsla af íbúðalánum sem hlutfall af útborguðum launum. Hámark er 35% almennt og 40% við fyrstu kaup.", "explanation": "Mortgage payments as a percentage of take-home pay. The maximum is generally 35%, and 40% for first-time buyers.", "daemi": "Mest 400.000 kr. af 1.000.000 kr. launum við fyrstu kaup.", "hopur": 2}, {"hugtak": "Greiðslumat", "en": "Affordability assessment", "skyring": "Mat lánveitanda á því hvort þú ráðir við greiðslurnar, miðað við tekjur, skuldir og framfærslukostnað.", "explanation": "The lender's assessment of whether you can afford the payments, based on income, debts and living costs.", "daemi": "", "hopur": 2}, {"hugtak": "Eigið fé, eignamyndun", "en": "Equity, equity build-up", "skyring": "Sá hluti íbúðarinnar sem þú átt sjálfur: verð íbúðar mínus skuldir. Eignamyndun er þegar sá hluti stækkar.", "explanation": "The part of the home you own yourself: the price of the home minus debts. Equity build-up is when that part grows.", "daemi": "Íbúð 50 m.kr., lán 40 m.kr.: eigið fé 10 m.kr.", "hopur": 2}, {"hugtak": "Yfirdráttur", "en": "Overdraft", "skyring": "Heimild til að fara í mínus á bankareikningi. Vextir eru háir.", "explanation": "Permission to go below zero on a bank account. The interest rate is high.", "daemi": "", "hopur": 2}, {"hugtak": "Greiðsludreifing", "en": "Instalment plan", "skyring": "Að skipta greiðslu, til dæmis á kreditkorti, á nokkra mánuði gegn vöxtum og gjöldum.", "explanation": "Splitting a payment, for example on a credit card, over several months in return for interest and fees.", "daemi": "", "hopur": 2}, {"hugtak": "Dráttarvextir", "en": "Late-payment interest", "skyring": "Háir vextir sem leggjast á ef greitt er of seint.", "explanation": "High interest charged when a payment is made late.", "daemi": "", "hopur": 2}];
+(function () {
+  // ---------- Snið ----------
+  function grp(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  var nf = { format: function (x) { var r = Math.round(x); return (r < 0 ? "-" : "") + grp(String(Math.abs(r))); } };
+  var nf1 = { format: function (x) { var s = Math.abs(x).toFixed(1).split("."); return (x < -0.05 ? "-" : "") + grp(s[0]) + "," + s[1]; } };
+  function kr(x) { return nf.format(Math.round(x)) + " kr."; }
+  function mkr(x) { return nf1.format(x / 1e6) + " m.kr."; }
+  function pct(x) { return nf1.format(x * 100) + "%"; }
+  function num(id) { var v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // ---------- Skjáir og leiðsögn ----------
+  var screens = Array.prototype.slice.call(document.querySelectorAll(".screen"));
+  var byLota = {};
+  screens.forEach(function (s) { (byLota[s.dataset.lota] = byLota[s.dataset.lota] || []).push(s); });
+  var cur = { lota: "yfirlit", i: 0 };
+  var stage = document.getElementById("stage");
+
+  function parseHash() {
+    var h = (location.hash || "").replace("#", "");
+    var m = h.match(/^(lota-\d)(?:-(\d+))?$/);
+    if (m && byLota[m[1]]) return { lota: m[1], i: Math.min(byLota[m[1]].length, Math.max(1, parseInt(m[2] || "1", 10))) - 1 };
+    if (byLota[h]) return { lota: h, i: 0 };
+    return { lota: "yfirlit", i: 0 };
+  }
+  function hashFor(l, i) { return byLota[l].length > 1 ? "#" + l + "-" + (i + 1) : "#" + l; }
+  function go(l, i) { var h = hashFor(l, i); if (location.hash !== h) location.hash = h; else render(); }
+
+  function render() {
+    cur = parseHash();
+    var list = byLota[cur.lota];
+    screens.forEach(function (s) { s.classList.remove("active"); });
+    var sc = list[cur.i];
+    sc.classList.add("active");
+    document.querySelectorAll("nav.tabs a").forEach(function (a) {
+      if (a.dataset.lota === cur.lota) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    var pills = document.getElementById("pills");
+    pills.innerHTML = list.length > 1 ? list.map(function (s, i) {
+      return '<a href="' + hashFor(cur.lota, i) + '"' + (i === cur.i ? ' aria-current="step"' : "") + '><span class="n">' + (i + 1) + "</span>" + esc(s.dataset.short) + "</a>";
+    }).join("") : "";
+    document.getElementById("prev").disabled = !prevOf();
+    document.getElementById("next").disabled = !nextOf();
+    stage.scrollTop = 0;
+    if (cur.lota === "lota-2") drawMortgage();
+    fit();
+  }
+  var order = ["yfirlit", "lota-1", "lota-2", "lota-3", "hugtok"];
+  function nextOf() {
+    if (cur.i < byLota[cur.lota].length - 1) return [cur.lota, cur.i + 1];
+    var k = order.indexOf(cur.lota);
+    return k < order.length - 1 ? [order[k + 1], 0] : null;
+  }
+  function prevOf() {
+    if (cur.i > 0) return [cur.lota, cur.i - 1];
+    var k = order.indexOf(cur.lota);
+    return k > 0 ? [order[k - 1], byLota[order[k - 1]].length - 1] : null;
+  }
+  document.getElementById("next").addEventListener("click", function () { var n = nextOf(); if (n) go(n[0], n[1]); });
+  document.getElementById("prev").addEventListener("click", function () { var p = prevOf(); if (p) go(p[0], p[1]); });
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.tagName;
+    if (t === "INPUT" || t === "SELECT" || t === "TEXTAREA") return;
+    if (e.key === "ArrowRight" || e.key === "PageDown") { var n = nextOf(); if (n) { e.preventDefault(); go(n[0], n[1]); } }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { var p = prevOf(); if (p) { e.preventDefault(); go(p[0], p[1]); } }
+  });
+  document.getElementById("full").addEventListener("click", function () {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(function () {});
+    } catch (e) {}
+  });
+  document.addEventListener("fullscreenchange", function () {
+    document.getElementById("full").textContent = document.fullscreenElement ? "Loka fullum skjá" : "Fullur skjár";
+  });
+  window.addEventListener("hashchange", render);
+
+  // Skala texta svo skjárinn passi án þess að skruna
+  function fit() {
+    var sc = document.querySelector(".screen.active");
+    if (!sc) return;
+    var f = sc.querySelector(".fit");
+    if (window.matchMedia("(max-width: 900px)").matches || sc.dataset.nofit) { f.style.setProperty("--s", 1); return; }
+    var avail = stage.clientHeight - 28;
+    var lo = 0.6, hi = 1.45;
+    f.style.minHeight = "0";
+    for (var k = 0; k < 9; k++) {
+      var mid = (lo + hi) / 2;
+      f.style.setProperty("--s", mid);
+      if (f.scrollHeight <= avail && f.scrollWidth <= stage.clientWidth) lo = mid; else hi = mid;
+    }
+    f.style.setProperty("--s", lo);
+    f.style.minHeight = "";
+  }
+  window.addEventListener("resize", fit);
+  document.querySelectorAll("details").forEach(function (d) { d.addEventListener("toggle", fit); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+
+  // ---------- ÁHK ----------
+  function irr(cf) {
+    function f(x) { var s = 0; cf.forEach(function (c) { s += c[1] * Math.pow(1 + x, -c[0]); }); return s; }
+    var lo = -0.99, hi = 1000, flo = f(lo);
+    for (var i = 0; i < 300; i++) { var mid = (lo + hi) / 2, fm = f(mid); if ((fm > 0) === (flo > 0)) { lo = mid; flo = fm; } else { hi = mid; } }
+    return (lo + hi) / 2;
+  }
+  function loan(P, rate, n, feePct, payFee, type) {
+    var r = rate / 12, bal = P, pays = [];
+    var pmt = r ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
+    for (var k = 1; k <= n; k++) { var interest = bal * r, afb = type === "jg" ? pmt - interest : P / n; bal -= afb; pays.push(afb + interest + payFee); }
+    var fee = P * feePct, rec = P - fee, tot = pays.reduce(function (a, b) { return a + b; }, 0);
+    var cf = [[0, -rec]].concat(pays.map(function (p, i) { return [(i + 1) / 12, p]; }));
+    return { fee: fee, rec: rec, first: pays[0], last: pays[n - 1], tot: tot, cost: tot - P + fee, ahk: irr(cf) };
+  }
+  var presets = { syni: [300000, 12.05, 12, 2.9, 0, "jg"], A: [300000, 17, 3, 3.98, 398, "jg"], B: [300000, 15.45, 12, 0, 250, "ja"], C: [300000, 12.05, 24, 2.9, 0, "jg"], D: [300000, 15.5, 12, 0, 0, "ja"] };
+  function tile(k, v, hl) { return '<div class="tile' + (hl ? " hl" : "") + '"><div class="k">' + k + '</div><div class="v">' + v + "</div></div>"; }
+  function calcAhk() {
+    var P = num("a-P"), n = Math.max(1, Math.round(num("a-n"))), t = document.getElementById("a-t").value;
+    if (P <= 0) return;
+    var L = loan(P, num("a-r") / 100, n, num("a-f") / 100, num("a-g"), t);
+    var payTxt = t === "jg" ? kr(L.first) : kr(L.first) + " → " + kr(L.last);
+    document.getElementById("ahk-out").innerHTML = tile("Mánaðarleg greiðsla", payTxt) + tile("Lántökugjald", kr(L.fee)) + tile("Útborgað til þín", kr(L.rec)) +
+      tile("Samtals greitt", kr(L.tot)) + tile("Heildarkostnaður", kr(L.cost), true) + tile("ÁHK", pct(L.ahk), true);
+    document.getElementById("ahk-note").textContent = "Heildarkostnaður er samtals greitt mínus lánsfjárhæð, að viðbættu lántökugjaldi. Vextirnir eru " +
+      nf1.format(num("a-r")) + "% en ÁHK er " + pct(L.ahk) + ", því gjöldin bætast við.";
+  }
+  document.getElementById("ahk-form").addEventListener("input", calcAhk);
+  document.getElementById("ahk-form").addEventListener("submit", function (e) { e.preventDefault(); });
+  document.querySelectorAll("#ahk-presets button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var p = presets[b.dataset.p];
+      ["a-P", "a-r", "a-n", "a-f", "a-g", "a-t"].forEach(function (id, i) { document.getElementById(id).value = p[i]; });
+      calcAhk();
+    });
+  });
+  calcAhk();
+
+  // ---------- Húsnæðislán ----------
+  function mortgage(P, rate, years, infl, indexed, type) {
+    var n = years * 12, r = rate / 12, cpi = Math.pow(1 + infl, 1 / 12) - 1, price = P / 0.8;
+    var bal = P, idx = 1, out = { greidsla: [], fast: [], eftir: [P], eign: [price - P], tot: 0, totFast: 0, max: 0 };
+    for (var k = 1; k <= n; k++) {
+      idx *= 1 + cpi;
+      if (indexed) bal *= 1 + cpi;
+      var rem = n - k + 1, interest = bal * r, pmt, afb;
+      if (type === "jg") { pmt = r ? bal * r / (1 - Math.pow(1 + r, -rem)) : bal / rem; afb = pmt - interest; }
+      else { afb = bal / rem; pmt = afb + interest; }
+      bal -= afb;
+      out.tot += pmt; out.totFast += pmt / idx; out.max = Math.max(out.max, pmt);
+      if (k === 1) { out.greidsla.push(pmt); out.fast.push(pmt / idx); }
+      if (k % 12 === 0) { out.greidsla.push(pmt); out.fast.push(pmt / idx); out.eftir.push(Math.max(bal, 0)); out.eign.push(price * idx - Math.max(bal, 0)); }
+    }
+    out.first = out.greidsla[0];
+    return out;
+  }
+  var view = "greidsla";
+  var loans = [
+    { name: "Verðtryggt, jafnar greiðslur", col: "--vt", dash: "", idx: true, t: "jg" },
+    { name: "Óverðtryggt, jafnar greiðslur", col: "--ovt", dash: "", idx: false, t: "jg" },
+    { name: "Verðtryggt, jafnar afborganir", col: "--vt", dash: "7 5", idx: true, t: "ja" },
+    { name: "Óverðtryggt, jafnar afborganir", col: "--ovt", dash: "7 5", idx: false, t: "ja" }
+  ];
+  function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function niceMax(v) { var e = Math.pow(10, Math.floor(Math.log10(v))), m = v / e; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e; }
+  function drawMortgage() {
+    var infl = num("m-i") / 100, P = num("m-L") * 1e6, Y = parseInt(document.getElementById("m-y").value, 10);
+    document.getElementById("m-i-val").textContent = nf1.format(infl * 100) + "%";
+    if (P <= 0) return;
+    var res = loans.map(function (l) { return { l: l, m: mortgage(P, (l.idx ? num("m-vt") : num("m-ovt")) / 100, Y, infl, l.idx, l.t) }; });
+    var isTable = view === "tafla";
+    document.getElementById("m-chartwrap").hidden = isTable;
+    document.getElementById("m-tablewrap").hidden = !isTable;
+    var t10 = Math.min(10, Y);
+    var rows = [
+      ["Fyrsta greiðsla", function (m) { return kr(m.first); }],
+      ["Greiðsla eftir " + t10 + " ár", function (m) { return kr(m.greidsla[t10]); }],
+      ["Hæsta greiðsla", function (m) { return kr(m.max); }],
+      ["Eftirstöðvar eftir " + t10 + " ár", function (m) { return mkr(m.eftir[t10]); }],
+      ["Samtals greitt (krónur hvers tíma)", function (m) { return mkr(m.tot); }],
+      ["Samtals greitt á föstu verðlagi", function (m) { return mkr(m.totFast); }]
+    ];
+    var h = "<thead><tr><th></th>" + res.map(function (o) { return "<th>" + o.l.name + "</th>"; }).join("") + "</tr></thead><tbody>";
+    rows.forEach(function (r) { h += "<tr><td>" + r[0] + "</td>" + res.map(function (o) { return "<td>" + r[1](o.m) + "</td>"; }).join("") + "</tr>"; });
+    document.getElementById("m-table").innerHTML = h + "</tbody>";
+    if (isTable) return;
+    var svg = document.getElementById("m-chart");
+    var W = 640, H = 300, L = 74, R = 16, T = 12, B = 30;
+    var series = res.map(function (o) { return o.m[view]; });
+    var mn = 0, mx = 0;
+    series.forEach(function (s) { s.forEach(function (v) { mx = Math.max(mx, v); mn = Math.min(mn, v); }); });
+    mx = niceMax(mx || 1);
+    var lo = mn < 0 ? -niceMax(-mn) : 0;
+    function x(i) { return L + (W - L - R) * i / Y; }
+    function y(v) { return T + (H - T - B) * (1 - (v - lo) / (mx - lo)); }
+    var big = mx >= 2e6;
+    function lab(v) { return big ? nf1.format(v / 1e6).replace(",0", "") + " m.kr." : nf.format(v / 1000) + " þús."; }
+    var g = "";
+    for (var i = 0; i <= 5; i++) {
+      var v = lo + (mx - lo) * i / 5;
+      g += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text x="' + (L - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + lab(v) + "</text>";
+    }
+    for (var a = 0; a <= Y; a += 5) g += '<text x="' + x(a) + '" y="' + (H - 10) + '" text-anchor="middle">' + a + (a === Y ? " ár" : "") + "</text>";
+    res.forEach(function (o, si) {
+      var pts = series[si].map(function (v, i) { return x(i).toFixed(1) + "," + y(v).toFixed(1); }).join(" ");
+      g += '<polyline fill="none" stroke="' + cssv(o.l.col) + '" stroke-width="2.6" stroke-linejoin="round"' + (o.l.dash ? ' stroke-dasharray="' + o.l.dash + '"' : "") + ' points="' + pts + '"/>';
+      var last = series[si].length - 1;
+      g += '<circle cx="' + x(last) + '" cy="' + y(series[si][last]) + '" r="3.5" fill="' + cssv(o.l.col) + '"/>';
+    });
+    g += '<line class="hover" id="m-hl" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" visibility="hidden"/>';
+    g += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent" id="m-hit"/>';
+    svg.innerHTML = g;
+    document.getElementById("m-legend").innerHTML = loans.map(function (l) {
+      return '<span><i style="border-top-color:' + cssv(l.col) + ";border-top-style:" + (l.dash ? "dashed" : "solid") + '"></i>' + l.name + "</span>";
+    }).join("");
+    var hit = document.getElementById("m-hit");
+    hit.addEventListener("mousemove", function (e) {
+      var rect = svg.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width * W;
+      var yr = Math.max(0, Math.min(Y, Math.round((px - L) / (W - L - R) * Y)));
+      var hl = document.getElementById("m-hl");
+      hl.setAttribute("x1", x(yr)); hl.setAttribute("x2", x(yr)); hl.setAttribute("visibility", "visible");
+      var f = view === "eftir" || view === "eign" ? mkr : kr;
+      document.getElementById("m-read").textContent = "Ár " + yr + ": " + res.map(function (o, si) {
+        return o.l.name.replace("Verðtryggt", "VT").replace("Óverðtryggt", "ÓVT").replace(", jafnar greiðslur", " JG").replace(", jafnar afborganir", " JA") + " " + f(series[si][yr]);
+      }).join(" · ");
+    });
+    hit.addEventListener("mouseleave", function () { document.getElementById("m-hl").setAttribute("visibility", "hidden"); });
+  }
+  document.getElementById("m-form").addEventListener("input", drawMortgage);
+  document.getElementById("m-form").addEventListener("submit", function (e) { e.preventDefault(); });
+  document.querySelectorAll(".seg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      view = b.dataset.v;
+      document.querySelectorAll(".seg button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      drawMortgage();
+    });
+  });
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawMortgage); } catch (e) {}
+  new MutationObserver(drawMortgage).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // ---------- Hugtakalisti ----------
+  var gHead = ["Hugtak", "Á ensku", "Skýring", "Explanation", "Dæmi"];
+  function gRow(g) { return [g.hugtak, g.en, g.skyring, g.explanation, g.daemi]; }
+  function drawGlossary(q) {
+    q = (q || "").trim().toLowerCase();
+    var h = "<thead><tr>" + gHead.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr></thead><tbody>";
+    var last = 0;
+    GLOSSARY.forEach(function (g) {
+      if (q && gRow(g).join(" ").toLowerCase().indexOf(q) < 0) return;
+      if (g.hopur !== last && g.hopur === 2) h += '<tr class="grp"><td colspan="5">Fleiri hugtök sem gott er að kunna</td></tr>';
+      last = g.hopur;
+      h += "<tr>" + gRow(g).map(function (c, i) { return "<td>" + (i === 0 ? "<strong>" + esc(c) + "</strong>" : esc(c)) + "</td>"; }).join("") + "</tr>";
+    });
+    document.getElementById("g-table").innerHTML = h + "</tbody>";
+  }
+  document.getElementById("g-filter").addEventListener("input", function (e) { drawGlossary(e.target.value); });
+  drawGlossary("");
+
+  var msg = document.getElementById("g-msg");
+  var dlPromise = window.claude && window.claude.use ? window.claude.use("downloads") : Promise.resolve(null);
+  function saveFile(name, blob) {
+    return dlPromise.then(function (dl) {
+      if (dl) return dl.save({ filename: name, data: blob }).then(function () { msg.textContent = name + " var vistað."; });
+      if (window.claude) { msg.textContent = "Niðurhal er ekki í boði hér."; return; }
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    }).catch(function (e) {
+      msg.textContent = e && e.code === "declined" ? "Hætt við niðurhal." : "Ekki tókst að sækja skrána. Reyndu aftur.";
+    });
+  }
+  document.getElementById("g-xlsx").addEventListener("click", function () {
+    if (!window.XLSX) { msg.textContent = "Excel útflutningur hlóðst ekki. Athugaðu nettenginguna."; return; }
+    var aoa = [gHead].concat(GLOSSARY.map(gRow));
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 26 }, { wch: 28 }, { wch: 60 }, { wch: 60 }, { wch: 45 }];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Hugtakalisti");
+    var buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveFile("Hugtakalisti_lan_og_lantokur.xlsx", new Blob([buf]));
+  });
+  var docxBtn = document.getElementById("g-docx");
+  docxBtn.addEventListener("click", function () {
+    fetch("Hugtakalisti.pdf").then(function (r) { if (!r.ok) throw new Error(); return r.blob(); })
+      .then(function (b) { return saveFile("Hugtakalisti_lan_og_lantokur.pdf", b); })
+      .catch(function () { msg.textContent = "PDF skjalið fylgir ekki þessari útgáfu síðunnar. Notaðu Excel hnappinn."; });
+  });
+  dlPromise.then(function (dl) { if (window.claude && !dl) { document.querySelector(".gbtns").hidden = true; } });
+
+  render();
+})();
+</script>
+</body>
+</html>
